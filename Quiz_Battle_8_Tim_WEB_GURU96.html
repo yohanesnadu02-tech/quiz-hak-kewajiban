@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Quiz Battle 8 Tim - Real Time</title>
+<script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+<style>
+*{box-sizing:border-box}body{margin:0;font-family:Arial,sans-serif;background:linear-gradient(135deg,#071d32,#116b9a);color:#fff;min-height:100vh}
+.wrap{max-width:1500px;margin:auto;padding:16px}.center{text-align:center}h1{font-size:clamp(30px,4vw,58px);margin:4px 0}.sub{font-size:20px;opacity:.9}
+.panel{background:#fff;color:#16364d;border-radius:22px;padding:22px;box-shadow:0 10px 25px #0005;margin:14px 0}.panel h2{margin-top:0}
+input,select{padding:14px;border-radius:12px;border:2px solid #d5e2e8;font-size:18px;width:100%;margin:6px 0}button{border:0;border-radius:12px;padding:13px 18px;font-size:17px;font-weight:900;cursor:pointer;margin:5px;background:#17364d;color:#fff}.primary{background:#ffd447;color:#17364d}.danger{background:#d94b4b}.hidden{display:none!important}
+.code{font-size:48px;font-weight:900;letter-spacing:8px;text-align:center}.status{text-align:center;font-weight:900;margin:8px}.teams{display:grid;grid-template-columns:repeat(4,1fr);gap:9px}.team{background:#f2f6f8;color:#16364d;border-radius:14px;padding:9px;text-align:center}.team .nm{color:#fff;border-radius:9px;padding:7px;font-weight:900}.c1{background:#1976d2}.c2{background:#249b57}.c3{background:#d6a400}.c4{background:#d94b4b}.c5{background:#7346a8}.c6{background:#e97819}.c7{background:#d95d91}.c8{background:#6b513c}.big{font-size:42px;font-weight:900}.q{font-size:clamp(22px,2.6vw,38px);font-weight:900;line-height:1.2}.clock{font-size:45px;font-weight:900;color:#17364d;background:#ffd447;border-radius:15px;padding:10px 20px;display:inline-block}.answers{display:grid;grid-template-columns:1fr 1fr;gap:10px}.ans{background:#edf4f7;color:#16364d;width:100%}.reveal{background:#2e9b57}.wrong{background:#d94b4b}.result{font-size:22px;line-height:1.7}.note{font-size:13px;opacity:.8;text-align:center}
+@media(max-width:900px){.teams{grid-template-columns:repeat(2,1fr)}}@media(max-width:600px){.teams,.answers{grid-template-columns:1fr}}
+</style>
+
+<style>
+#teacherGate{position:fixed;inset:0;z-index:100000;background:linear-gradient(135deg,#0f172a,#1e3a8a);
+display:flex;align-items:center;justify-content:center;font-family:Arial,sans-serif}
+#teacherGate .gatebox{width:min(92vw,430px);background:white;border-radius:24px;padding:28px;box-shadow:0 20px 60px rgba(0,0,0,.35);text-align:center}
+#teacherGate h1{margin:0 0 8px;font-size:28px}
+#teacherGate p{color:#64748b}
+#teacherGate input{width:100%;box-sizing:border-box;padding:14px;border:2px solid #cbd5e1;border-radius:12px;font-size:18px;text-align:center;margin:10px 0}
+#teacherGate button{width:100%;padding:14px;border:0;border-radius:12px;background:#2563eb;color:#fff;font-size:17px;font-weight:700;cursor:pointer}
+#teacherGate .err{color:#dc2626;font-weight:700;min-height:24px;margin-top:8px}
+#teacherGate .studentNote{font-size:13px;color:#64748b;margin-top:16px}
+</style>
+</head>
+<body>
+<div id="teacherGate">
+  <div class="gatebox">
+    <div style="font-size:48px">🔐</div>
+    <h1>MODE GURU / IFP</h1>
+    <p>Masukkan kode akses guru untuk membuka kontrol permainan.</p>
+    <input id="teacherCode" type="password" inputmode="text" autocomplete="off"
+           placeholder="Kode Guru">
+    <button onclick="unlockTeacher()">MASUK SEBAGAI GURU</button>
+    <div id="teacherError" class="err"></div>
+    <div class="studentNote">Siswa tidak perlu memasukkan kode ini. Siswa menggunakan mode HP dan memilih TIM 1–TIM 8.</div>
+  </div>
+</div>
+<script>
+function unlockTeacher(){
+  const code = document.getElementById('teacherCode').value;
+  if(code === 'guru96'){
+    sessionStorage.setItem('quizTeacherUnlocked','1');
+    document.getElementById('teacherGate').style.display='none';
+  }else{
+    document.getElementById('teacherError').textContent='Kode guru salah.';
+    document.getElementById('teacherCode').value='';
+    document.getElementById('teacherCode').focus();
+  }
+}
+document.addEventListener('DOMContentLoaded',()=>{
+  if(sessionStorage.getItem('quizTeacherUnlocked')==='1'){
+    const g=document.getElementById('teacherGate');
+    if(g) g.style.display='none';
+  }
+});
+</script>
+
+<div id="shareHelp" style="display:none;position:fixed;inset:auto 16px 16px 16px;z-index:9999;
+background:#111827;color:white;border-radius:16px;padding:14px 16px;box-shadow:0 8px 30px rgba(0,0,0,.25);
+font-family:Arial,sans-serif">
+  <b>📱 CARA SISWA BERGABUNG</b><br>
+  <span style="font-size:14px;line-height:1.5">
+  Buka alamat website game ini di HP siswa, lalu masukkan <b>KODE GAME</b> yang tampil di IFP
+  dan pilih <b>TIM 1–TIM 8</b>.
+  </span>
+</div>
+
+<div class="wrap">
+<header class="center"><h1>🏆 QUIZ BATTLE 8 TIM</h1><div class="sub">Hak & Kewajiban Warga Negara • Real-Time</div></header>
+
+<section id="home" class="panel">
+<h2>🎮 Pilih Mode</h2>
+<div class="center">
+<button class="primary" onclick="showHost()">🖥️ MODE IFP / GURU</button>
+<button onclick="showJoin()">📱 MODE HP / TIM</button>
+</div>
+<p class="note">Gunakan satu perangkat IFP sebagai layar guru dan satu HP untuk setiap tim.</p>
+</section>
+
+<section id="host" class="panel hidden">
+<h2>🖥️ MODE IFP / GURU</h2>
+<div id="hostSetup">
+<p>Tekan tombol untuk membuat ruang permainan.</p>
+<button class="primary" onclick="createRoom()">➕ BUAT RUANG GAME</button>
+</div>
+<div id="hostRoom" class="hidden">
+<div class="center">KODE GAME</div><div class="code" id="roomCode">------</div>
+<div class="center"><button onclick="copyCode()">📋 Salin Kode</button><button onclick="startGame()" class="primary">▶ MULAI GAME</button><button onclick="resetRoom()" class="danger">♻ RESET</button></div>
+<div class="status" id="hostStatus">0 / 8 tim terhubung</div>
+<div class="teams" id="hostTeams"></div>
+<hr>
+<div class="q" id="hostQuestion">Menunggu guru memulai...</div>
+<div class="center"><div class="clock" id="hostClock">60</div></div>
+<div class="status" id="hostPhase">LOBBY</div>
+<div class="center"><button onclick="revealNow()" class="reveal">🎯 REVEAL SEKARANG</button><button onclick="nextQuestion()">➡ SOAL BERIKUTNYA</button><button onclick="showFinal()">🏆 HASIL AKHIR</button></div>
+</div>
+</section>
+
+<section id="join" class="panel hidden">
+<h2>📱 MODE HP / TIM</h2>
+<div id="joinLogin">
+<label>Kode game</label><input id="joinCode" placeholder="Contoh: AB12CD" maxlength="6">
+<button class="primary" onclick="joinRoom()">🔗 MASUK GAME</button>
+</div>
+<div id="teamPick" class="hidden">
+<h2>Pilih tim kamu</h2>
+<div class="teams" id="teamButtons"></div>
+</div>
+<div id="phoneGame" class="hidden">
+<div class="center"><div class="big" id="phoneTeam"></div><div id="phoneScore">0 poin</div><div class="clock" id="phoneClock">60</div></div>
+<div class="panel"><div id="phoneQ" class="q"></div><div id="phoneAnswers" class="answers"></div><div id="phoneStatus" class="status">Menunggu soal...</div></div>
+</div>
+</section>
+
+<div id="modal" class="panel hidden"><h2 id="modalTitle"></h2><div id="modalBody" class="result"></div><div class="center"><button class="primary" onclick="closeModal()">TUTUP</button></div></div>
+<p class="note">Prototype real-time memakai PeerJS/WebRTC. Perangkat harus memiliki internet dan membuka file ini melalui browser.</p>
+</div>
+
+<script>
+const bank=[
+{q:"Setiap warga negara memiliki kedudukan yang sama di dalam hukum dan pemerintahan. Hal ini terdapat dalam ...",a:["Pasal 27 ayat (1)","Pasal 28A","Pasal 31 ayat (1)","Pasal 34 ayat (2)"],c:0},
+{q:"Hak atas pekerjaan dan penghidupan yang layak bagi kemanusiaan terdapat dalam ...",a:["Pasal 27 ayat (2)","Pasal 28J","Pasal 30 ayat (1)","Pasal 34 ayat (1)"],c:0},
+{q:"Setiap warga negara berhak dan wajib ikut serta dalam upaya pembelaan negara. Ketentuan ini terdapat dalam ...",a:["Pasal 27 ayat (3)","Pasal 28E ayat (3)","Pasal 31 ayat (1)","Pasal 34 ayat (3)"],c:0},
+{q:"Hak untuk hidup dan mempertahankan hidup dijamin dalam ...",a:["Pasal 28A","Pasal 28D","Pasal 30","Pasal 34"],c:0},
+{q:"Kebebasan berserikat, berkumpul, dan mengeluarkan pendapat dijamin dalam ...",a:["Pasal 28E ayat (3)","Pasal 27 ayat (2)","Pasal 31 ayat (1)","Pasal 34 ayat (1)"],c:0},
+{q:"Setiap orang wajib menghormati hak asasi manusia orang lain. Ini merupakan isi ...",a:["Pasal 28J ayat (1)","Pasal 28A","Pasal 27 ayat (2)","Pasal 34 ayat (2)"],c:0},
+{q:"Setiap warga negara berhak mendapatkan pendidikan. Ketentuan ini terdapat dalam ...",a:["Pasal 31 ayat (1)","Pasal 28A","Pasal 27 ayat (2)","Pasal 30 ayat (1)"],c:0},
+{q:"Fakir miskin dan anak-anak terlantar dipelihara oleh negara. Ini terdapat dalam ...",a:["Pasal 34 ayat (1)","Pasal 34 ayat (2)","Pasal 28E","Pasal 27 ayat (1)"],c:0},
+{q:"Negara mengembangkan sistem jaminan sosial bagi seluruh rakyat. Ini terdapat dalam ...",a:["Pasal 34 ayat (2)","Pasal 28J ayat (2)","Pasal 30 ayat (1)","Pasal 27 ayat (3)"],c:0},
+{q:"Mengapa kebebasan berpendapat harus disertai tanggung jawab?",a:["Karena setiap orang wajib menghormati hak orang lain","Karena semua pendapat harus sama","Karena hanya pemerintah boleh berpendapat","Karena warga tidak boleh berbeda"],c:0}
+];
+const names=["TIM 1","TIM 2","TIM 3","TIM 4","TIM 5","TIM 6","TIM 7","TIM 8"];
+let peer=null, hostPeer=null, isHost=false, hostConns={}, myConn=null, myTeam=null;
+let teams=names.map(n=>({name:n,connected:false,score:0,answered:false,answer:null,elapsed:null}));
+let qi=0,time=60,running=false,revealed=false,timer=null;
+
+function showHost(){home.classList.add("hidden");host.classList.remove("hidden");isHost=true}
+function showJoin(){home.classList.add("hidden");join.classList.remove("hidden")}
+function makeId(){return Math.random().toString(36).substring(2,8).toUpperCase()}
+function createRoom(){
+ hostPeer=new Peer("QB8-"+makeId());
+ hostPeer.on("open",id=>{document.getElementById("roomCode").textContent=id.replace("QB8-","");hostSetup.classList.add("hidden");hostRoom.classList.remove("hidden");drawHost()});
+ hostPeer.on("connection",conn=>{
+   conn.on("open",()=>{hostConns[conn.peer]=conn;conn.send({type:"welcome",teams:teams.map(t=>({name:t.name,connected:t.connected}))});drawHost()});
+   conn.on("data",msg=>hostReceive(conn,msg));
+   conn.on("close",()=>{let t=teams.findIndex(x=>x.peer===conn.peer);if(t>=0){teams[t].connected=false;teams[t].peer=null;drawHost();broadcastState()}});
+ });
+}
+function joinRoom(){
+ let code=document.getElementById("joinCode").value.trim().toUpperCase();if(!code)return alert("Masukkan kode game.");
+ peer=new Peer();
+ peer.on("open",()=>{myConn=peer.connect("QB8-"+code);myConn.on("open",()=>{myConn.on("data",phoneReceive);joinLogin.classList.add("hidden");teamPick.classList.remove("hidden");drawTeamButtons()});myConn.on("close",()=>alert("Koneksi ke game terputus."))});
+ peer.on("error",e=>alert("Gagal masuk: "+e.type));
+}
+function drawTeamButtons(){
+ teamButtons.innerHTML=names.map((n,i)=>`<button id="pick${i}" onclick="pickTeam(${i})" ${teams[i]?.connected?"disabled":""}>${n}<br>${teams[i]?.connected?"🔒 TERISI":"✅ PILIH"}</button>`).join("");
+}
+function pickTeam(i){
+ myTeam=i;myConn.send({type:"joinTeam",team:i});teamPick.classList.add("hidden");phoneGame.classList.remove("hidden");document.getElementById("phoneTeam").textContent=names[i];document.getElementById("phoneStatus").textContent="Menunggu guru memulai...";
+}
+function hostReceive(conn,msg){
+ if(msg.type==="joinTeam"){
+   let i=msg.team;if(i<0||i>7||teams[i].connected){conn.send({type:"joinDenied",reason:"Tim sudah terisi."});return}
+   let old=Object.values(hostConns).find(c=>c.peer===conn.peer);teams[i].connected=true;teams[i].peer=conn.peer;conn.team=i;
+   conn.send({type:"joined",team:i,score:teams[i].score,question:qi,running,revealed,time});
+   broadcastState();drawHost();
+ }
+ if(msg.type==="answer"){
+   let i=conn.team;if(i==null||!running||revealed||teams[i].answered)return;
+   teams[i].answered=true;teams[i].answer=msg.answer;teams[i].elapsed=60-time;
+   broadcastState();
+   if(teams.every(t=>!t.connected||t.answered)) revealNow();
+ }
+}
+function broadcast(msg){Object.values(hostConns).forEach(c=>{try{c.send(msg)}catch(e){}})}
+function broadcastState(){
+ broadcast({type:"state",teams:teams.map(t=>({name:t.name,connected:t.connected,score:t.score,answered:t.answered})),qi,time,running,revealed});
+}
+function startGame(){
+ if(!Object.values(teams).some(t=>t.connected))return alert("Belum ada tim yang terhubung.");
+ qi=0;newRound();running=true;revealed=false;sendQuestion();drawHost();startTimer();
+}
+function newRound(){teams.forEach(t=>{t.answered=false;t.answer=null;t.elapsed=null});time=60}
+function sendQuestion(){
+ broadcast({type:"question",qi,q:bank[qi],time});
+}
+function startTimer(){
+ clearInterval(timer);timer=setInterval(()=>{if(!running)return;time--;drawHost();broadcast({type:"tick",time});
+ if(time<=0){time=0;running=false;clearInterval(timer);revealNow()}},1000)
+}
+function revealNow(){
+ if(revealed)return;
+ running=false;clearInterval(timer);revealed=true;
+ let q=bank[qi];
+ teams.forEach(t=>{if(!t.connected)return;if(!t.answered)return;t.score += (t.answer===q.c?(t.elapsed<=40?10:8):0)});
+ broadcast({type:"reveal",q,teams:teams.map(t=>({name:t.name,connected:t.connected,score:t.score,answered:t.answered,answer:t.answer,elapsed:t.elapsed}))});
+ drawHost();showHostReveal();
+}
+function showHostReveal(){
+ let q=bank[qi];let rows=teams.map((t,i)=>{let p=t.answer===q.c?(t.elapsed<=40?10:8):0;return `${names[i]} — ${t.answer===null?"Tidak menjawab":t.answer===q.c?"✓ BENAR":"✗ SALAH"} — ${p?`+${p}`:"+0"} — ${t.elapsed??"-"} detik`}).join("<br>");
+ document.getElementById("modalTitle").textContent=`🎯 REVEAL: ${String.fromCharCode(65+q.c)}. ${q.a[q.c]}`;
+ document.getElementById("modalBody").innerHTML=rows;modal.classList.remove("hidden");
+}
+function nextQuestion(){
+ closeModal();if(qi>=bank.length-1){showFinal();return}qi++;newRound();revealed=false;running=true;sendQuestion();drawHost();startTimer();
+}
+function showFinal(){
+ running=false;clearInterval(timer);let s=teams.map((t,i)=>({i,score:t.score})).sort((a,b)=>b.score-a.score);
+ document.getElementById("modalTitle").textContent="🏆 HASIL AKHIR";
+ document.getElementById("modalBody").innerHTML=s.map((x,n)=>`${["🥇","🥈","🥉"][n]||"•"} ${names[x.i]} — <b>${x.score} poin</b>`).join("<br>");
+ modal.classList.remove("hidden");
+}
+function resetRoom(){location.reload()}
+function closeModal(){modal.classList.add("hidden")}
+function copyCode(){navigator.clipboard?.writeText(document.getElementById("roomCode").textContent)}
+function drawHost(){
+ hostStatus.textContent=`${teams.filter(t=>t.connected).length} / 8 tim terhubung`;
+ hostTeams.innerHTML=teams.map((t,i)=>`<div class="team"><div class="nm c${i+1}">${t.name}</div><div>${t.connected?"🟢 TERHUBUNG":"⚪ MENUNGGU"}</div><b>⭐ ${t.score}</b><div>${t.answered?"✓ SUDAH MENJAWAB":""}</div></div>`).join("");
+ hostQuestion.textContent=running||revealed?bank[qi].q:"Menunggu guru memulai...";
+ hostClock.textContent=time;hostPhase.textContent=revealed?"REVEAL":running?"BERMAIN":"LOBBY";
+}
+function phoneReceive(msg){
+ if(msg.type==="welcome")drawTeamButtons();
+ if(msg.type==="joinDenied"){alert(msg.reason);location.reload()}
+ if(msg.type==="joined"){myTeam=msg.team}
+ if(msg.type==="question"){document.getElementById("phoneQ").textContent=msg.q.q;document.getElementById("phoneClock").textContent=msg.time;document.getElementById("phoneStatus").textContent="Pilih jawaban. Jawaban akan disembunyikan dari tim lain.";document.getElementById("phoneAnswers").innerHTML=msg.q.a.map((x,i)=>`<button class="ans" onclick="sendAnswer(${i})">${String.fromCharCode(65+i)}. ${x}</button>`).join("")}
+ if(msg.type==="tick"){document.getElementById("phoneClock").textContent=msg.time}
+ if(msg.type==="state"){let t=msg.teams[myTeam];if(t)document.getElementById("phoneScore").textContent=t.score+" poin";if(t?.answered)document.getElementById("phoneStatus").textContent="🔒 Jawaban terkunci — tunggu REVEAL";}
+ if(msg.type==="reveal"){let t=msg.teams[myTeam];document.getElementById("phoneScore").textContent=t.score+" poin";document.getElementById("phoneStatus").textContent=t.answer===null?"⏰ Tidak menjawab":t.answer===msg.q.c?`🎉 BENAR • +${t.elapsed<=40?10:8} poin`:"❌ SALAH";document.querySelectorAll("#phoneAnswers .ans").forEach((b,i)=>{b.disabled=true;if(i===msg.q.c)b.classList.add("correct");if(i===t.answer&&t.answer!==msg.q.c)b.classList.add("wrong")})}
+}
+function sendAnswer(k){
+ if(!myConn||myTeam===null)return;myConn.send({type:"answer",team:myTeam,answer:k});document.querySelectorAll("#phoneAnswers .ans").forEach(b=>b.disabled=true);document.getElementById("phoneStatus").textContent="🔒 JAWABAN TERKUNCI — MENUNGGU REVEAL";
+}
+</script>
+</body>
+</html>
